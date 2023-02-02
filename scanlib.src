@@ -1,0 +1,38 @@
+//command: scanlib
+if params.len == 0 or params.len > 1 or params[0] == "-h" or params[0] == "--help" then 
+	exit("Scan local or remote library.\nUsage: scanlib [address]:[port]\n       scanlib [library_path]")
+end if
+metaxploit = include_lib("/lib/metaxploit.so")
+if not metaxploit then 
+	metaxploit = include_lib(current_path + "/metaxploit.so")
+	if not metaxploit then exit("Could not find metaxploit.so.")
+end if
+print("Scanning lib at " + params[0])
+targetlib = null
+is_adress = params[0].indexOf(":")
+if is_adress then
+	address = slice(params[0], 0, is_adress)
+	port = slice(params[0], is_adress+1).to_int
+	if not port isa number then exit("Port is not a number in " + params[0])
+	session = metaxploit.net_use(address, port)
+	if not session then exit("Eroor during net_use")
+	targetlib = session.dump_lib
+else
+	targetlib = metaxploit.load(params[0])
+end if
+
+if targetlib then
+	print("Found library: " + targetlib.lib_name + " " + targetlib.version) 
+	listMem = metaxploit.scan(targetlib)
+	if listMem.len == 0 then 
+		exit("Scan completed: No issues detected.")
+	else
+		print("Scan completed: detected issues in " + listMem.len + " memory zones.")
+		index = 0
+		for itemMem in listMem
+			print(index +": [" + itemMem + "] Scanning for vulnerabilities...")
+			print(metaxploit.scan_address(targetlib, itemMem))
+			index = index + 1
+		end for
+	end if
+end if

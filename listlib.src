@@ -1,0 +1,16 @@
+//command: listlib
+metaxploit = include_lib("/lib/metaxploit.so")
+if not metaxploit then 
+	metaxploit = include_lib(current_path + "/metaxploit.so")
+end if
+folder = get_shell.host_computer.File("/lib")
+if not folder then exit("cannot open folder /lib")
+files = folder.get_files
+for file in files
+	msg = file.permissions + " " + file.owner + " " + file.group + " " + file.path
+	if metaxploit then 
+		lib = metaxploit.load(file.path) 
+		if lib then msg = msg + " " + lib.version
+	end if
+	print(msg)
+end for

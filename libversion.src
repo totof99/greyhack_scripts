@@ -1,0 +1,10 @@
+//command: libversion
+metaxploit = include_lib("/lib/metaxploit.so")
+if not metaxploit then 
+	metaxploit = include_lib(current_path + "/metaxploit.so")
+	if not metaxploit then exit("Could not find metaxploit.so.")
+end if
+if params.len == 0 then exit("Retrieve the library version.\nUsage: libversion [path_to_lib]\n\nExample: libversion /lib/libssh.so")
+metaLib = metaxploit.load(params[0])
+if not metaLib then exit("Can't find library: " + params[0])
+print(metaLib.lib_name + " " + metaLib.version)

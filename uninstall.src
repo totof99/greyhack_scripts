@@ -1,0 +1,15 @@
+//command: uninstall
+comp = get_shell.host_computer
+files = ["metaxploit.so","ScanLan.exe","nmap","rexploit","rscanlib","uninstall","install"]
+
+for file in files
+	print("Deleting " + file + "...")
+	f = comp.File(current_path + "/" + file)
+	if f then f.delete
+end for
+print("Deleting src...")
+srcFolder = comp.File(current_path + "/src")
+srcFolder.delete
+print("Restore logs...")
+log = comp.File(current_path + "/system.log")
+log.move("/var", "system.log")

@@ -1,0 +1,33 @@
+//command: install
+if params.len != 4 or params[0] == "-h" or params[0] == "--help" then 
+	exit("Connect by ssh and install usefull tools.\nUsage: install [address] [port] [user] [password]")
+end if
+address = params[0]
+port = params[1].to_int
+user = params[2]
+password = params[3]
+localshell = get_shell
+remoteshell = localshell.connect_service(address, port, user, password)
+
+if not remoteshell then exit("Cannot connect to " + address + ":" + port + " with " + user + "@" + password)
+print("Backup logs...")
+log = remoteshell.host_computer.File("/var/system.log")
+log.copy("/root", "system.log")
+
+binaries = ["nmap","rexploit","rscanlib","uninstall","install"] 
+for binary in binaries
+	print("Copying " + binary + "...")
+	input  = localshell.host_computer.File(current_path + "/src/" + binary + ".src")
+	remoteshell.host_computer.touch("/root/src/", binary + ".src")
+	output = remoteshell.host_computer.File("/root/src/" + binary + ".src")
+	output.set_content(input.get_content)
+	print("Compiling...")
+	remoteshell.build("/root/src/" + binary + ".src", "/root/")
+	print("Done")
+end for
+files = ["metaxploit.so"]
+for file in files
+	print("Copying " + file + "...")
+	localshell.scp(current_path + "/" + file, "/root/", remoteshell)
+end for
+remoteshell.start_terminal

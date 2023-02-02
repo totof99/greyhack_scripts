@@ -1,0 +1,9 @@
+//command: stop-rshell-server
+rshelld = include_lib("/lib/librshell.so")
+if not rshelld then
+    rshelld = include_lib(current_path + "/librshell.so")
+end if
+if not rshelld then exit("Error: Missing librshell.so library in the /lib path or the current folder")
+output = rshelld.stop_service
+if output != true then exit(output)
+print("rshell-server stopped.")
