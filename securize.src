@@ -1,0 +1,43 @@
+//command: securize
+if params.len > 0 and (params[0] == "-h" or params[0] == "--help") then exit("TODO Usage")
+passwordRoot = user_input("Password:",true)
+shell = get_shell("root",passwordRoot)
+
+applyRootWrite = function(file)
+	print("chmod " + file.name)
+	file.set_owner("root", true)
+	file.set_group("root", true)
+	file.chmod("u+rwx",true)
+	file.chmod("g+rx",true)
+	file.chmod("g-w",true)
+	file.chmod("o-rwx",true)
+end function
+
+if typeof(shell)=="shell" then
+	computer = shell.host_computer
+	print("block guest")
+	file1 = computer.File("/")
+	file1.chmod("g-w",true)
+	file1.chmod("o-rwx",true)
+	
+	file1 = computer.File("/lib")
+	applyRootWrite(file1)
+	
+	file1 = computer.File("/bin")
+	applyRootWrite(file1)
+	
+	file1 = computer.File("/usr/bin")
+	applyRootWrite(file1)
+	
+	if active_user != "root" then
+		home = computer.File(home_dir)
+		print("chmod " + home_dir)
+		home.set_owner(active_user, true)
+		home.chmod("u+rwx",true)
+		home.chmod("g+rx",true)
+		home.chmod("g-w",true)
+		home.chmod("o-rwx",true)
+	end if
+else 
+	print("Invalid Password")
+end if
