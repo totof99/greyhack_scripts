@@ -27,8 +27,8 @@ if typeof(ports) == "string" then exit(ports)
 info = "PORT STATE SERVICE VERSION LAN"   
 print("\nStarting nmap v1.1 at " + current_date)
 print("Interesting ports on " + params[0] + "\n")
-if(ports.len == 0) then exit("Scan finished. No open ports.")
 
+info = "0 - kernel_router " + router.kernel_version + " " + router.local_ip
 for port in ports
    service_info = router.port_info(port)
    lan_ips = port.get_lan_ip
