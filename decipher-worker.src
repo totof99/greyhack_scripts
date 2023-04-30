@@ -1,0 +1,59 @@
+//command: decipher-worker
+cryptools = include_lib("/lib/crypto.so")
+if not cryptools then exit("Error: Missing crypto library")
+
+if params and params.len == 1 then
+	newId = params[0]
+else
+	newId = str(ceil(rnd * 10000))
+end if
+
+print("workerId: " + newId)
+
+computer = get_shell.host_computer
+
+inputFolder = computer.File("/.tmp/input")
+if not inputFolder or not inputFolder.is_folder or not inputFolder.has_permission("w") or not inputFolder.has_permission("r") then
+	exit("Error: /.tmp/input folder should be created and and has rw permission")
+end if
+outputFolder = computer.File("/.tmp/output")
+if not outputFolder or not outputFolder.is_folder or not outputFolder.has_permission("w") or not outputFolder.has_permission("r") then
+	exit("Error: /.tmp/output folder should be created and and has rw permission")
+end if
+
+inputFolder = computer.File("/.tmp/input/" + newId)
+if not inputFolder then
+	created = computer.create_folder("/.tmp/input", newId)
+	if created != 1 then
+		exit("Error: cannot create /.tmp/input/" + newId + "\n" + created)
+	end if
+	inputFolder = computer.File("/.tmp/input/" + newId)
+end if
+while true
+	files = inputFolder.get_files
+	for file in files
+		print("Got task " + file.name)
+		if file.get_content.len == 0 then
+			print("Task " + file.name + " not ready")
+			continue
+		end if
+		start = time
+		lines = file.get_content.split("\n")
+		output = []
+		for line in lines
+			if line.len > 0 then
+				print("Deciphering " + line + "...")
+				decrypted = cryptools.decipher(line)
+				print("Return " + decrypted)
+				output.push(decrypted)
+			end if
+		end for
+		print("Finished task " + file.name)
+		print("Elapsed time: " + str(time-start) + "s")
+		print("Sending result for task " + file.name)
+		computer.touch("/.tmp/output", file.name)
+		computer.File("/.tmp/output/" + file.name).set_content(output.join("\n"))
+		file.delete
+	end for
+	wait(4)
+end while

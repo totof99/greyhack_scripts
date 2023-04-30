@@ -29,6 +29,16 @@ if typeof(shell)=="shell" then
 	file1 = computer.File("/usr/bin")
 	applyRootWrite(file1)
 	
+	file1 = computer.File("/.tmp")
+	if file1 then
+		print("chmod /.tmp")
+		file1.chmod("u-rwx",true)
+		file1.chmod("g-rwx",true)
+		file1.chmod("o-rwx",true)
+		file1.chmod("u+rw",true)
+		file1.chmod("g+rw",true)
+	end if
+	
 	if active_user != "root" then
 		home = computer.File(home_dir)
 		print("chmod " + home_dir)

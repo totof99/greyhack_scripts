@@ -1,0 +1,83 @@
+//command: decipher-master
+if params.len != 1 or params[0] == "-h" or params[0] == "--help" then exit(command_info("decipher_usage"))
+
+origFile = params[0]
+computer = get_shell.host_computer
+
+file = computer.File(origFile)
+if not file then exit("decipher: can't find " + origFile)
+if file.is_binary then exit("decipher: can't read " + origFile + ". Binary file")
+if not file.has_permission("r") then exit("decipher: can't read file. Permission denied")
+if file.get_content.len == 0 then exit("decipher: no users found")
+lines = file.get_content.split("\n")
+
+tmp = computer.File("/.tmp")
+if not tmp or not tmp.is_folder or not tmp.has_permission("r") then
+	exit("Error: /.tmp folder should be created and has r permission")
+end if
+inputFolder = computer.File("/.tmp/input")
+if not inputFolder or not inputFolder.is_folder or not inputFolder.has_permission("r") or not inputFolder.has_permission("w")  then
+	exit("Error: /.tmp/input folder should be created and has rw permission")
+end if
+outputFolder = computer.File("/.tmp/output")
+if not outputFolder or not outputFolder.is_folder or not outputFolder.has_permission("r")or not outputFolder.has_permission("w")  then
+	exit("Error: /.tmp/output folder should be created and has rw permission")
+end if
+workers = []
+for w in inputFolder.get_folders
+	workers.push(w.name)
+end for
+if workers.len == 0 then
+	exit("No workers available")
+else
+	print("Found " + workers.len + " workers.")
+end if
+
+nbWorkers = workers.len
+workerIndex = 0
+jobs = {}
+for line in lines
+	userPass = line.split(":")
+	if userPass[1].len == 0 then
+		print("User " + userPass[0] + " has an empty password, skipped")
+		continue
+	end if
+	newTaskId = str(jobs.len+1)
+	print("User " + userPass[0] + " assigned to task " + newTaskId)
+	jobs[newTaskId] = userPass[0]
+	
+	workerId = workers[workerIndex]
+	print("Assign task " + newTaskId + " to worker " + workerId)
+	
+	created = computer.touch("/.tmp/input/" + workerId, newTaskId)
+	if created != 1 then
+		exit("Error: Cannot create /.tmp/input/" + workerId + "/" + newTaskId + "\n" + created)
+	else
+		input = computer.File("/.tmp/input/" + workerId + "/" + newTaskId)
+		input.set_content(userPass[1])
+	end if
+	
+	workerIndex = workerIndex + 1
+	workerIndex = workerIndex % nbWorkers
+end for
+result = []
+start = time
+while jobs.len > 0
+	files = outputFolder.get_files
+	for file in files
+		taskId = file.name
+		print("Got result for task " + taskId)
+		if file.get_content.len == 0 then
+			print("Result for task " + file.name + " not ready")
+			continue
+		end if
+		user = jobs[taskId]
+		result.push(user + " " + file.get_content)
+		print(result[result.len-1])
+		file.delete
+		jobs.remove(taskId)
+	end for
+	wait(4)
+end while
+print("Elapsed time: " + str(time-start) + "s")
+print(format_columns(result.join("\n")))

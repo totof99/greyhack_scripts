@@ -1,0 +1,53 @@
+//command: setup-parallel-decipher
+computer = get_shell.host_computer
+print("Killing remaining workers...")
+procs = computer.show_procs.split("\n")
+for proc in procs
+	cols = proc.split(" ")
+	pid = cols[1].to_int
+	cmdName = cols[4]
+	if cmdName == "decipherworker" then
+		print("kill " + pid)
+		computer.close_program(pid)
+	end if
+end for
+
+push_folder = function(comp, path, name)
+	fullPath = path
+	if fullPath != "/" then fullPath = fullPath + "/"
+	fullPath = fullPath + name
+	folder = computer.File(fullPath)
+	if folder and not folder.is_folder then
+		print(fullPath + " is not a folder, removing it")
+		folder.delete
+		folder = null
+	end if
+	if not folder then
+		print(fullPath + " does not exist, creating it")
+		created = computer.create_folder(path, name)
+		if created == null or created != 1 then
+			exit("Error: cannot create " + fullPath)
+		end if
+		folder = computer.File(fullPath)
+	end if
+	return folder
+end function
+
+push_folder(computer, "/", ".tmp")
+
+print("Removing worker input...")
+inputs = push_folder(computer, "/.tmp", "input")
+for workerFolder in inputs.get_folders
+	if workerFolder.is_folder then
+		for task in workerFolder.get_files
+			task.delete
+		end for
+	end if
+	workerFolder.delete
+end for
+
+print("Removing worker output...")
+outputs = push_folder(computer, "/.tmp", "output")
+for task in outputs.get_files
+	task.delete
+end for
