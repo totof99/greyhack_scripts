@@ -4,4 +4,4 @@ if not metaxploit then
 	metaxploit = include_lib(current_path + "/metaxploit.so")
 	if not metaxploit then exit("Could not find metaxploit.so.")
 end if
-metaxploit.rshell_client("97.229.245.55", 1222, "routing")
+metaxploit.rshell_client("192.168.1.2", 1222, "routing")
