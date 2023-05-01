@@ -4,7 +4,6 @@ passwordRoot = user_input("Password:",true)
 shell = get_shell("root",passwordRoot)
 
 applyRootWrite = function(file)
-	print("chmod " + file.name)
 	file.set_owner("root", true)
 	file.set_group("root", true)
 	file.chmod("u+rwx",true)
@@ -21,12 +20,15 @@ if typeof(shell)=="shell" then
 	file1.chmod("o-rwx",true)
 	
 	file1 = computer.File("/lib")
+	print("chmod /lib")
 	applyRootWrite(file1)
 	
 	file1 = computer.File("/bin")
+	print("chmod /bin")
 	applyRootWrite(file1)
 	
 	file1 = computer.File("/usr/bin")
+	print("chmod /usr/bin")
 	applyRootWrite(file1)
 	
 	file1 = computer.File("/.tmp")
