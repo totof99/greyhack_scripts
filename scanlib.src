@@ -15,7 +15,7 @@ if is_adress then
 	port = slice(params[0], is_adress+1).to_int
 	if not port isa number then exit("Port is not a number in " + params[0])
 	session = metaxploit.net_use(address, port)
-	if not session then exit("Eroor during net_use")
+	if not session then exit("Error during net_use")
 	targetlib = session.dump_lib
 else
 	targetlib = metaxploit.load(params[0])
