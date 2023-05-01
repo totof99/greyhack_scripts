@@ -2,12 +2,6 @@
 cryptools = include_lib("/lib/crypto.so")
 if not cryptools then exit("Error: Missing crypto library")
 
-GetPassword = function(userPass)
-	if userPass.len != 2 then exit("decipher: " + file.path + " wrong syntax")
-	password = cryptools.decipher(userPass[1])
-	return password
-end function
-
 if params.len != 1 or params[0] == "-h" or params[0] == "--help" then exit(command_info("decipher_usage"))
 
 origFile = params[0]
@@ -18,35 +12,53 @@ if not file.has_permission("r") then exit("decipher: can't read file. Permission
 if file.get_content.len == 0 then exit("decipher: no users found")
 	
 lines = file.get_content.split("\n")
-password = null
-if lines.len == 1 then
-	userPass = lines[0].split(":")
-	print("Selected user: " + userPass[0] + "\nDeciphering...")
-	password = GetPassword(userPass)
-else
-	print("Multiple users found.")
-	numLine = 1
-	for line in lines
-		if line.len > 0 then
-			print(numLine + ": " + line)
-			numLine = numLine + 1
+
+users = []
+for line in lines
+	if line.len > 0 then
+		userPass = line.split(":")
+		if userPass.len != 2 then 
+			print("decipher: wrong syntax for " + line)
+			continue
 		end if
+		users.push(userPass)
+	end if
+end for
+
+option = 1
+if users.len > 1 then
+	print("Multiple users found.")
+	print("0: All users")
+	numLine = 1
+	for user in users
+		print(numLine + ": " + user[0])
+		numLine = numLine + 1
 	end for
 	option = ""
 	inputOk = false
 	while( not inputOk )
 		option = user_input("Select user: ").to_int
-		if typeof(option) != "number" or (option < 1 or option > lines.len) then
+		if typeof(option) != "number" or (option < 0 or option > lines.len) then
 			print("Invalid input. Type a valid number")
 		else 
 			inputOk = true
 		end if
 	end while
-		
-	userPass = lines[option - 1].split(":")
-	print("Selected user: " + userPass[0] + "\nDeciphering...")
-	password = GetPassword(userPass)
 end if
-	
-if not password then exit("Can't find password :(")
-print("password found! => " + password)
+result = []
+start = time
+if option == 0 then
+	for user in users
+		print("Deciphering user " + user[0] + "...")
+		password = cryptools.decipher(user[1])
+		result.push(user[0] + " " + password)
+		print("Found " + result[result.len-1])
+	end for
+else 
+	userPass = users[option - 1]
+	print("Deciphering user " + userPass[0] + "...")
+	password = cryptools.decipher(userPass[1])
+	result.push(userPass[0] + " " + password)
+end if
+print("Elapsed time: " + str(time-start) + "s")
+print(format_columns(result.join("\n")))
