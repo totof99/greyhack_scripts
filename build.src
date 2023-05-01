@@ -1,0 +1,53 @@
+//command: build
+if not params or params.len != 2 or params[0] == "-h" or params[0] == "--help" then exit(command_info("build_usage"))
+
+pathSource = params[0]
+pathProgram = params[1]
+
+shell = get_shell
+computer = shell.host_computer
+
+if pathSource == "." then pathSource = current_path
+if pathProgram == "." then pathProgram = current_path
+
+fileSource = computer.File(pathSource)
+folderDest = computer.File(pathProgram)
+
+if fileSource == null then exit("build: can't find "+ pathSource)
+if folderDest == null then exit("build: can't find " + pathProgram)
+
+if not folderDest.is_folder then folderDest = folderDest.parent
+
+if fileSource.is_folder then
+	files = fileSource.get_files
+	if files.len > 0 then 
+		print("Found " + files.len + " files to compile.")
+		index = 1
+		error = 0
+		start = time
+		for file in files
+			print("[" + index + "/" + files.len + "] Compiling " + file.name + "...")
+			output = shell.build(file.path, folderDest.path)
+			if output.len == 0 then
+				print("successful.")
+			else
+				print(output);
+				error = error + 1
+			end if
+			index = index + 1
+		end for
+		if error > 0 then print("build failed. " + error + " errors.") else print("build done.")
+		print("Time elapsed: " + str(time-start) + "s")
+	end if
+else
+	start = time
+	print("Compiling " + file.name + "...")
+	output = shell.build(file.path, folderDest.path)
+	if output.len == 0 then
+		print("successful.")
+	else
+		print(output);
+	end if
+	print("Time elapsed: " + str(time-start) + "s")
+end if
+
