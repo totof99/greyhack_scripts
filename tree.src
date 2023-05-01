@@ -1,0 +1,51 @@
+//command: tree
+if not params or params.len == 0 then
+	folderPath = current_path
+else if params.len > 1 or params[0] == "-h" or params[0] == "--help" then
+	exit("Usage: tree [opt: path]")
+else
+	folderPath = params[0]
+end if
+
+folder = get_shell.host_computer.File(folderPath)
+if folder == null then
+	print("tree: No such file or directory")
+else 		if not folder.has_permission("r") then
+	print("tree: permission denied")
+else
+	printElement = function(currentElement, indent, last)
+		if currentElement.is_folder then
+			print(indent + "<color=#2390B2FF>" + currentElement.name + "</color>")
+		else if currentElement.is_binary then
+			print(indent + "<color=#D1304FFF>" + currentElement.name + "</color>")
+		else
+			print(indent + currentElement.name)
+		end if
+		
+		if currentElement.is_folder then
+			if indent.len == 0 then
+				indent = "|--"
+			else if last then
+				indent = indent[0:-3] + "   " + "|--"
+			else
+				indent = indent[0:-3] + "|  " + "|--"
+			end if
+			
+			subFiles = []
+			for f in currentElement.get_folders
+				subFiles.push({"name":f.name, "file":f})
+			end for
+			for f in currentElement.get_files
+				subFiles.push({"name":f.name, "file":f})
+			end for
+			subFiles.sort("name")
+			index = 0
+			for sub in subFiles
+				last = (index == subFiles.len-1)
+				printElement(sub["file"], indent, last)
+				index = index + 1
+			end for
+		end if
+	end function
+	printElement(folder, "", true)
+end if
